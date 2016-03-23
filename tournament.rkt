@@ -3,10 +3,10 @@
 (require "GomokuServer.rkt")
 
 
-
 (define-struct pthing (name command score player) #:mutable)
 ;; a pthing is a structure: (make-pthing n c s p)
 ;; where n is a string, c is a string and s is a int, and p is a player (containing an input and output ports)
+
 
 ;; reset-pthing: pthing -> void
 (define (reset-pthing p)
@@ -49,8 +49,9 @@
              [else (void)])
            ])))
 
+
 ;; tournament-games: int pthing pthing tcp-listener -> ...
-;; run three games between the two players with given names, finally reporting the results
+;; run num-games games between the two players with given names, finally reporting the results
 (define (tournament-games num-games p1 p2 my-listener)
   (cond [(or (> (pthing-score p1) (floor (/ num-games 2)))
              (> (pthing-score p2) (floor (/ num-games 2))))
@@ -68,10 +69,8 @@
            (set-pthing-player! p1 (make-player p1-iprt p1-oprt))
            (set-pthing-player! p2 (make-player p2-iprt p2-oprt))
            (nu-srv-game START-GAME p1 p2 'x)
-           (close-output-port p1-oprt)
-           (close-input-port p1-iprt)
-           (close-output-port p2-oprt)
-           (close-input-port p2-iprt)
+           (close-output-port p1-oprt)(close-input-port p1-iprt)
+           (close-output-port p2-oprt)(close-input-port p2-iprt)
            (printf "~a's standard out~%" (pthing-name p1))
            (for ([l (in-port read-line (first start-p1))]) (displayln l))
            (printf "~a's standard error~%" (pthing-name p1))
@@ -86,15 +85,26 @@
            ((fifth start-p1) 'kill)
            ((fifth start-p2) 'kill)
            ;(tcp-close my-listener)
-           (tournament-games num-games p2 p1 my-listener))])) 
+           (tournament-games num-games p2 p1 my-listener))]))
       
-
-;#|
-;(make-pthing "random" "racket GomokuClient.rkt" 0 (void)) 
-;(make-pthing "dray" "racket /home/iba/teaching/CS116ai/fall13/Gomoku/drayP3/dray.rkt" 0 (void)) 
 
 (define players
   (list
+   (make-pthing "chris" "cd /home/iba/teaching/CS116ai/spring16/gamesearch/cbetsillP03/; java gomoku" 0 (void))
+   (make-pthing "hunter" "cd /home/iba/teaching/CS116ai/spring16/gamesearch/hmcgushionP3/; java Controller3AlphaBeta04" 0 (void))
+   ;(make-pthing "james" "java /home/iba/teaching/CS116ai/spring16/gamesearch/jbyronP3/GomokuAgent" 0 (void))
+   (make-pthing "jacob" "cd /home/iba/teaching/CS116ai/spring16/gamesearch/jochsP3/; java GomokuSearch" 0 (void))
+   ;(make-pthing "jared" "java /home/iba/teaching/CS116ai/spring16/gamesearch/jwadap3/Gomoku" 0 (void))
+   ;(make-pthing "kyle" "java /home/iba/teaching/CS116ai/spring16/gamesearch/kyle/GomokuClient" 0 (void))
+   ;(make-pthing "natalie" "java /home/iba/teaching/CS116ai/spring16/gamesearch/nsteepletonP3/GomokuSearch" 0 (void))
+   ;(make-pthing "sam" "java /home/iba/teaching/CS116ai/spring16/gamesearch/sbentz/GomokuClient" 0 (void))
+   ;'(make-pthing "dray" "racket /home/wfi/CS116ai/fall13/Gomoku/drayP3/dray.rkt" 0 (void)) 
+   ;'(make-pthing "grady" "cd /home/wfi/CS116ai/fall13/Gomoku/ggoffP3; java GomokuPlayer" 0 (void))
+   ;'(make-pthing "echoe" "cd /home/wfi/CS116ai/fall13/Gomoku/ecjonesP3/build/classes; java ecjonesp3.GomokuAgent" 0 (void))
+   ;'(make-pthing "tim" "cd /home/wfi/CS116ai/fall13/Gomoku/tswanson; java Agent" 0 (void))
+   ;'(make-pthing "adam" "python /home/wfi/CS116ai/fall13/Gomoku/ahessP3/client.py" 0 (void))
+   ;'(make-pthing "nolan" "racket /home/wfi/CS116ai/fall13/Gomoku/nblew/GomokuClient.exe" 0 (void)) 
+   ;'(make-pthing "lewis" "/home/wfi/CS116ai/fall13/Gomoku/lwallP3/gomoku" 0 (void))
    ;(make-pthing "newtrained" "racket /home/iba/teaching/CS150ml/Gomoku/AdaptiveGomoku2.rkt" 0 (void))
    ;(make-pthing "oldtrained" "racket /home/iba/teaching/CS150ml/Gomoku/AdaptiveGomokuOriginal.rkt" 0 (void))
    ;(make-pthing "random" "racket GomokuClient.rkt" 0 (void))  
@@ -105,22 +115,22 @@
    ;(make-pthing "daniel" "cd gomokutourney2/daniel/bin; java Client" 0 (void))
    (make-pthing "dillon" "cd gomokutourney2/dillon; java GomokuNN" 0 (void))
    (make-pthing "grady" "cd gomokutourney2/grady; java GomokuClient GameStates.tmp" 0 (void))
-|#
    (make-pthing "robert" "cd gomokutourney2/robert; java LearningAgent" 0 (void))
    (make-pthing "sam" "cd gomokutourney2/sam; racket Client1.rkt" 0 (void))
    (make-pthing "stefan" "cd gomokutourney2/stefan; java Gomoku localhost 17033" 0 (void)) 
    (make-pthing "tim" "cd gomokutourney2/tim; java Agent" 0 (void))
    (make-pthing "andrey" "cd gomokutourney2/andrey; java gomoku" 0 (void))
-
+   |#
    ))
 
-;#|
+#|
 (do ([ps players (cdr ps)])
   ((= (length ps) 1))
   (for ([p2 (cdr ps)])
     (let ([p1 (car ps)])
-      (tournament-games 7 p1 p2 my-listener))))
-;|#
+      (tournament-games 3 p1 p2 my-listener))))
+|#
+
 #|
 (tournament-games 7
                   (make-pthing "newtrained" "racket /home/iba/teaching/CS150ml/Gomoku/AdaptiveGomoku2.rkt" 0 (void))
