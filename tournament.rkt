@@ -55,7 +55,7 @@
 (define (tournament-games num-games p1 p2 my-listener)
   (cond [(or (> (pthing-score p1) (floor (/ num-games 2)))
              (> (pthing-score p2) (floor (/ num-games 2))))
-         (printf "~%RESULT~%Player: ~a won ~a~%Player: ~a won ~a~%~%" (pthing-name p1) (pthing-score p1) (pthing-name p2) (pthing-score p2))
+         (printf "~%Tournament Pairing Result~%Player: ~a won ~a~%Player: ~a won ~a~%~%" (pthing-name p1) (pthing-score p1) (pthing-name p2) (pthing-score p2))
          (reset-pthing p1) (reset-pthing p2)
          ]
         [else 
@@ -92,8 +92,9 @@
   (list
    (make-pthing "chris" "cd /home/iba/teaching/CS116ai/spring16/gamesearch/cbetsillP03/; java gomoku" 0 (void))
    (make-pthing "hunter" "cd /home/iba/teaching/CS116ai/spring16/gamesearch/hmcgushionP3/; java Controller3AlphaBeta04" 0 (void))
+   (make-pthing "random" "racket RandomPlayer.rkt" 0 (void))
    ;(make-pthing "james" "java /home/iba/teaching/CS116ai/spring16/gamesearch/jbyronP3/GomokuAgent" 0 (void))
-   (make-pthing "jacob" "cd /home/iba/teaching/CS116ai/spring16/gamesearch/jochsP3/; java GomokuSearch" 0 (void))
+   ;(make-pthing "jacob" "cd /home/iba/teaching/CS116ai/spring16/gamesearch/jochsP3/; java GomokuSearch" 0 (void))
    ;(make-pthing "jared" "java /home/iba/teaching/CS116ai/spring16/gamesearch/jwadap3/Gomoku" 0 (void))
    ;(make-pthing "kyle" "java /home/iba/teaching/CS116ai/spring16/gamesearch/kyle/GomokuClient" 0 (void))
    ;(make-pthing "natalie" "java /home/iba/teaching/CS116ai/spring16/gamesearch/nsteepletonP3/GomokuSearch" 0 (void))
@@ -123,13 +124,14 @@
    |#
    ))
 
-#|
+;#|
+(define my-listener (get-a-listener))
 (do ([ps players (cdr ps)])
   ((= (length ps) 1))
   (for ([p2 (cdr ps)])
     (let ([p1 (car ps)])
       (tournament-games 3 p1 p2 my-listener))))
-|#
+;|#
 
 #|
 (tournament-games 7
