@@ -25,13 +25,8 @@
 ;;-------------------------------------------------------------------------------------------
 
 
-#|
-Issues: add thread for reading move from client so that can interrupt if goes over time.
-|#
-
-
 (define IN-ROW-TO-WIN 5)
-(define BOARD-SIZE 5)
+(define BOARD-SIZE 11)
 (define CELL-SIZE 40)
 (define STONE-RADIUS (floor (* CELL-SIZE 9/20)))
 (define MARGIN (* CELL-SIZE 3/4))
@@ -139,9 +134,9 @@ Issues: add thread for reading move from client so that can interrupt if goes ov
                  [c BOARD-SIZE])
          (symbol=? 'b (vgame-spot gs r c)))))
 
-;; game-end?: GS -> boolean
+;; game-over?: GS -> boolean
 ;; determine if the game is over
-(define (game-end? gs)
+(define (game-over? gs)
   (not (symbol=? (game-result gs) '?)))
 
 ;; game-result: GS -> symbol['x,'o,'d,'?]
@@ -214,6 +209,11 @@ Issues: add thread for reading move from client so that can interrupt if goes ov
 ;; read a player's move from the player's input-port, returning as a dotted pair
 (define (read-move iprt)
   (cons (read iprt) (read iprt)))
+;; read-move-from-string: string -> (cons N N)
+;; like read-move but reads the move from a single string that was read as a line
+(define (read-move-from-string s)
+  (with-input-from-string s
+                          (lambda () (cons (read) (read)))))
 
 ;; send-game-info: string GS symbol output-port -> void
 ;; send the given game information to the given output-port
@@ -231,29 +231,27 @@ Issues: add thread for reading move from client so that can interrupt if goes ov
 ;; srv-game: GS player player symbol -> 
 (define (srv-game gs p1 p2 to-play)
   (draw-game gs)
-  ;; unless game-over, do:
-  (cond [(not (game-end? gs))
-         ;; send game-status, board-state, and player-to-play to p1
+  (cond [(game-over? gs) ; terminate with actual outcome
+         (send-game-info (win/lose/draw gs to-play) gs to-play (player-oprt p1)) (flush-output (player-oprt p1))
+         (send-game-info (win/lose/draw gs (toggle to-play)) gs to-play (player-oprt p2)) (flush-output (player-oprt p2))]
+        [else ; send game-status, board-state, and player-to-play to p1
          (send-game-info 'continuing gs to-play (player-oprt p1)) (flush-output (player-oprt p1))
-         (let* ([start-time (current-milliseconds)]
-                [a-move (read-move (player-iprt p1))]) ; read move from p1
-           ;; check if 
-           (cond [(> (- (current-milliseconds) start-time) 2000)
+         (let ([maybe-move (sync/timeout 2.0 (read-line-evt (player-iprt p1)))])
+           (cond [(boolean? maybe-move) ; move was NOT made in time -- forfeit-time
                   (send-game-info 'forfeit-time gs to-play (player-oprt p1))
                   (send-game-info 'win gs (toggle to-play) (player-oprt p2))]
-                 [(not (and (< -1 (car a-move) BOARD-SIZE) (< -1 (cdr a-move) BOARD-SIZE)
-                            (symbol=? 'b (vgame-spot gs (car a-move) (cdr a-move)))))
-                  (printf  "forfeit-move: attempted move at (~a,~a)~%" (car a-move) (cdr a-move))
-                  (send-game-info 'forfeit-move gs to-play (player-oprt p1))
-                  (send-game-info 'win gs (toggle to-play) (player-oprt p2))]
-                 [else ;; move is valid (i.e., on the board and vacant)
-                  (place-move! gs a-move to-play) ; and update game-state accordingly
-                  ;; call srv-game with new game-state and p2 p1 swapped
-                  (srv-game gs p2 p1 (toggle to-play))]))]
-        [else ;; terminate with actual outcome
-         (send-game-info (win/lose/draw gs to-play) gs to-play (player-oprt p1)) (flush-output (player-oprt p1))
-         (send-game-info (win/lose/draw gs (toggle to-play)) gs to-play (player-oprt p2)) (flush-output (player-oprt p2))
-         ]))
+                 [else ; check if valid move (i.e., on the board and vacant)
+                  (let ([a-move (read-move-from-string maybe-move)]) ; get p1's move
+                    (cond [(not (and (< -1 (car a-move) BOARD-SIZE) (< -1 (cdr a-move) BOARD-SIZE)
+                                     (symbol=? 'b (vgame-spot gs (car a-move) (cdr a-move))))) ;; invalid move -- forfeit-move
+                           (printf  "forfeit-move: attempted move at (~a,~a)~%" (car a-move) (cdr a-move))
+                           (send-game-info 'forfeit-move gs to-play (player-oprt p1))
+                           (send-game-info 'win gs (toggle to-play) (player-oprt p2))]
+                          [else ;; move is valid
+                           (place-move! gs a-move to-play) ; and update game-state accordingly
+                           ;; call srv-game with new game-state and p2 p1 swapped
+                           (srv-game gs p2 p1 (toggle to-play))]))]))]         
+        ))
   
 ;; serve-a-game: tcp-listener -> ...
 (define (serve-a-game my-listener)
@@ -275,4 +273,3 @@ Issues: add thread for reading move from client so that can interrupt if goes ov
 (define my-listener (get-a-listener))
 (serve-a-game my-listener)
 |#
-;;---------------------------------------------------------------------------------
