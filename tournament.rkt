@@ -18,7 +18,7 @@
   ;; unless game-over, do:
   (let ([p1 (pthing-player pt1)]
         [p2 (pthing-player pt2)])
-    (cond [(not (game-end? gs))
+    (cond [(not (no-valid-moves? gs))
            ;; send game-status, board-state, and player-to-play to p1
            (send-game-info 'continuing gs to-play (player-oprt p1)) (flush-output (player-oprt p1))
            (let* ([start-time (current-milliseconds)]

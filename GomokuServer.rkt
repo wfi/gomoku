@@ -24,16 +24,19 @@
 ;;  a. a single line consisting of space separated row and column values
 ;;-------------------------------------------------------------------------------------------
 
-
-(define IN-ROW-TO-WIN 5)
+;; game constants
 (define BOARD-SIZE 11)
+(define MAX-MOVE-TIME 2.0)
+;; graphics constants
+(define IN-ROW-TO-WIN 5)
 (define CELL-SIZE 40)
 (define STONE-RADIUS (floor (* CELL-SIZE 9/20)))
 (define MARGIN (* CELL-SIZE 3/4))
-(define START-GAME (build-vector BOARD-SIZE (lambda (r) (build-vector BOARD-SIZE (lambda (c) 'b)))))
 (define WID/HEIGHT (+ (* 2 MARGIN) (* (sub1 BOARD-SIZE) CELL-SIZE)))
-
 (start WID/HEIGHT WID/HEIGHT)
+;; misc
+(define START-GAME (build-vector BOARD-SIZE (lambda (r) (build-vector BOARD-SIZE (lambda (c) 'b)))))
+
 
 ;; a Game-State (GS) is a (vectorof (vectorof symbol))
 
@@ -236,7 +239,7 @@
          (send-game-info (win/lose/draw gs (toggle to-play)) gs to-play (player-oprt p2)) (flush-output (player-oprt p2))]
         [else ; send game-status, board-state, and player-to-play to p1
          (send-game-info 'continuing gs to-play (player-oprt p1)) (flush-output (player-oprt p1))
-         (let ([maybe-move (sync/timeout 2.0 (read-line-evt (player-iprt p1)))])
+         (let ([maybe-move (sync/timeout MAX-MOVE-TIME (read-line-evt (player-iprt p1)))])
            (cond [(boolean? maybe-move) ; move was NOT made in time -- forfeit-time
                   (send-game-info 'forfeit-time gs to-play (player-oprt p1))
                   (send-game-info 'win gs (toggle to-play) (player-oprt p2))]
