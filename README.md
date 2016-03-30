@@ -25,3 +25,9 @@ Repeat as desired.
 The tournament needs a bit more set-up.
 Players must be created as in the example found in tournament.rkt.
 In this case, players must run locally on the server machine.
+
+## To Do
+
+* add better error handling in tournament.rkt when a client player crashes
+* add comprehensive recording of results rather than just displaying the
+result between each pairing of two players

@@ -150,6 +150,7 @@
         [(no-valid-moves? gs) 'd]
         [else '?]))
 
+;; win/lose/draw: GS symbol -> (or 'win 'lose 'draw)
 (define (win/lose/draw gs to-play)
   (let ([res (game-result gs)])
     (case res
@@ -157,6 +158,14 @@
       [(o) (if (symbol=? 'o to-play) 'win 'lose)]
       [(d) 'draw]
       [else (error 'win/lose/draw "game not finished")])))
+
+;; update-score: player symbol -> void
+(define (update-score p result)
+  (case result
+    [(win) (set-player-wins! p (add1 (player-wins p)))]
+    [(lose) (set-player-losses! p (add1 (player-losses p)))]
+    [(draw) (set-player-draws! p (add1 (player-draws p)))]
+    [else (error 'update-score "unrecognized game result -- should be one of win, lose, draw")]))
 
 ;;-----------------------------------------------------------
 ;; HELPER CODE FOR CHECKING N-IN-A-ROW
@@ -203,8 +212,12 @@
 ;;------------------------------------------------------------------------------------------------------
 ;;----------------- Server Portion ---------------------------------------------------------------------
 
-(define-struct player (iprt oprt))
-;; a player is a structure: (make-player i o) where i is an input-port and o is an output-port
+(struct player (iprt oprt name command wins draws losses) #:mutable)
+;; a player is a structure: (player i o n c w d l)
+;; where i is an input-port and o is an output-port, n is a string name for the player,
+;; c is the command-line to run the player controller,
+;; w, d and l are numbers representing the wins, draws, and losses of the player, respectively.
+
 
 (define (get-a-listener) (tcp-listen GOMOKUPORT))
 
@@ -231,12 +244,21 @@
   ;;(printf "~a~%" to-play)
   (fprintf oprt "~a~%" to-play))
 
-;; srv-game: GS player player symbol -> 
+;; srv-game: GS player player symbol -> ...
+;; given a game-state, two players, and a symbol for which color is to play
+;; (w/ implicit understanding that p1 plays next with that color)
+;; continue serving the game until completed.
+;; finally return the pair of player structs with their score counts updated
 (define (srv-game gs p1 p2 to-play)
   (draw-game gs)
   (cond [(game-over? gs) ; terminate with actual outcome
-         (send-game-info (win/lose/draw gs to-play) gs to-play (player-oprt p1)) (flush-output (player-oprt p1))
-         (send-game-info (win/lose/draw gs (toggle to-play)) gs to-play (player-oprt p2)) (flush-output (player-oprt p2))]
+         (let ([p1-result (win/lose/draw gs to-play)]
+               [p2-result (win/lose/draw gs (toggle to-play))])
+           (send-game-info p1-result gs to-play (player-oprt p1)) (flush-output (player-oprt p1))
+           (update-score p1 p1-result)
+           (send-game-info p2-result gs to-play (player-oprt p2)) (flush-output (player-oprt p2))
+           (update-score p2 p2-result)
+           (cons p1 p2))]
         [else ; send game-status, board-state, and player-to-play to p1
          (send-game-info 'continuing gs to-play (player-oprt p1)) (flush-output (player-oprt p1))
          (let ([maybe-move (sync/timeout MAX-MOVE-TIME (read-line-evt (player-iprt p1)))])
@@ -258,21 +280,28 @@
   
 ;; serve-a-game: tcp-listener -> ...
 (define (serve-a-game my-listener)
+  (reset-start-game)
   (let*-values ([(p1-iprt p1-oprt) (tcp-accept my-listener)]
-                [(p2-iprt p2-oprt) (tcp-accept my-listener)])
+                [(p2-iprt p2-oprt) (tcp-accept my-listener)]
+                [(result) (srv-game START-GAME
+                                    (player p1-iprt p1-oprt "p1-black" "ad-hoc" 0 0 0)
+                                    (player p2-iprt p2-oprt "p2-white" "ad-hoc" 0 0 0)
+                                    'x)])
     (printf "accepted two connections!~n")
-    (reset-start-game)
-    (srv-game START-GAME (make-player p1-iprt p1-oprt) (make-player p2-iprt p2-oprt) 'x)
     (close-output-port p1-oprt)
     (close-input-port p1-iprt)
     (close-output-port p2-oprt)
     (close-input-port p2-iprt)
-    (printf "finished game~%")
+    (printf "finished game with ~a win/lose/draw ~a/~a/~a and ~a win/lose/draw ~a/~a/~a~%"
+            (player-name (car result))
+            (player-wins (car result)) (player-losses (car result)) (player-draws (car result))
+            (player-name (cdr result))
+            (player-wins (cdr result)) (player-losses (cdr result)) (player-draws (cdr result)))
     ;(tcp-close my-listener)
     (serve-a-game my-listener)
     ))
 
-#|
+;#|
 (define my-listener (get-a-listener))
 (serve-a-game my-listener)
-|#
+;|#
