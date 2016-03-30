@@ -24,7 +24,7 @@
            (let* ([start-time (current-milliseconds)]
                   [a-move (read-move (player-iprt p1))]) ; read move from p1
              ;; check if 
-             (cond [(> (- (current-milliseconds) start-time) 2000)
+             (cond [(> (- (current-milliseconds) start-time) (* 1000 MAX-MOVE-TIME))
                     (send-game-info 'forfeit-time gs to-play (player-oprt p1))
                     (send-game-info 'win gs (toggle to-play) (player-oprt p2))
                     ;(printf "nu-srv-game: adding 1 to score for ~a will have ~a~%" (pthing-name pt2) (pthing-score pt2))
