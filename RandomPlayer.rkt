@@ -50,6 +50,8 @@
            (displayln to-play)
            |#
            (sleep .1)
+           ;; occasionally wait for the clock to run out for testing the time-out feature of the server
+           ;(when (< (random) 0.025) (sleep 2.5))
            ;; send the client's move to the server
            (displayln (random-move board-state) oprt) (flush-output oprt) ;send move to server
            (net-play-moves iprt oprt)]

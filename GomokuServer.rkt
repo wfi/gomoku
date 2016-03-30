@@ -244,7 +244,7 @@
   ;;(printf "~a~%" to-play)
   (fprintf oprt "~a~%" to-play))
 
-;; srv-game: GS player player symbol -> ...
+;; srv-game: GS player player symbol -> (cons player player)
 ;; given a game-state, two players, and a symbol for which color is to play
 ;; (w/ implicit understanding that p1 plays next with that color)
 ;; continue serving the game until completed.
@@ -263,15 +263,17 @@
          (send-game-info 'continuing gs to-play (player-oprt p1)) (flush-output (player-oprt p1))
          (let ([maybe-move (sync/timeout MAX-MOVE-TIME (read-line-evt (player-iprt p1)))])
            (cond [(boolean? maybe-move) ; move was NOT made in time -- forfeit-time
-                  (send-game-info 'forfeit-time gs to-play (player-oprt p1))
-                  (send-game-info 'win gs (toggle to-play) (player-oprt p2))]
+                  (send-game-info 'forfeit-time gs to-play (player-oprt p1)) (update-score p1 'lose)
+                  (send-game-info 'win gs (toggle to-play) (player-oprt p2)) (update-score p2 'win)
+                  (cons p1 p2)]
                  [else ; check if valid move (i.e., on the board and vacant)
                   (let ([a-move (read-move-from-string maybe-move)]) ; get p1's move
                     (cond [(not (and (< -1 (car a-move) BOARD-SIZE) (< -1 (cdr a-move) BOARD-SIZE)
                                      (symbol=? 'b (vgame-spot gs (car a-move) (cdr a-move))))) ;; invalid move -- forfeit-move
                            (printf  "forfeit-move: attempted move at (~a,~a)~%" (car a-move) (cdr a-move))
-                           (send-game-info 'forfeit-move gs to-play (player-oprt p1))
-                           (send-game-info 'win gs (toggle to-play) (player-oprt p2))]
+                           (send-game-info 'forfeit-move gs to-play (player-oprt p1)) (update-score p1 'lose)
+                           (send-game-info 'win gs (toggle to-play) (player-oprt p2)) (update-score p2 'win)
+                           (cons p1 p2)]
                           [else ;; move is valid
                            (place-move! gs a-move to-play) ; and update game-state accordingly
                            ;; call srv-game with new game-state and p2 p1 swapped
