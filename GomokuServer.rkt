@@ -212,11 +212,12 @@
 ;;------------------------------------------------------------------------------------------------------
 ;;----------------- Server Portion ---------------------------------------------------------------------
 
-(struct player (iprt oprt name command wins draws losses) #:mutable)
-;; a player is a structure: (player i o n c w d l)
+(struct player (iprt oprt name command wins draws losses proclist) #:mutable)
+;; a player is a structure: (player i o n c w d l pl)
 ;; where i is an input-port and o is an output-port, n is a string name for the player,
 ;; c is the command-line to run the player controller,
-;; w, d and l are numbers representing the wins, draws, and losses of the player, respectively.
+;; w, d and l are numbers representing the wins, draws, and losses of the player, respectively,
+;; and pl is a list of five items returned by the process function
 
 
 (define (get-a-listener) (tcp-listen GOMOKUPORT))
@@ -264,6 +265,9 @@
          (let ([maybe-move (sync/timeout MAX-MOVE-TIME (read-line-evt (player-iprt p1)))])
            (cond [(boolean? maybe-move) ; move was NOT made in time -- forfeit-time
                   (send-game-info 'forfeit-time gs to-play (player-oprt p1)) (update-score p1 'lose)
+                  (when (and (cons? (player-proclist p1))
+                             (symbol=? ((fifth (player-proclist p1)) 'status) 'running))
+                    ((fifth (player-proclist p1)) 'kill))
                   (send-game-info 'win gs (toggle to-play) (player-oprt p2)) (update-score p2 'win)
                   (cons p1 p2)]
                  [else ; check if valid move (i.e., on the board and vacant)
@@ -286,8 +290,8 @@
   (let*-values ([(p1-iprt p1-oprt) (tcp-accept my-listener)]
                 [(p2-iprt p2-oprt) (tcp-accept my-listener)]
                 [(result) (srv-game START-GAME
-                                    (player p1-iprt p1-oprt "p1-black" "ad-hoc" 0 0 0)
-                                    (player p2-iprt p2-oprt "p2-white" "ad-hoc" 0 0 0)
+                                    (player p1-iprt p1-oprt "p1-black" "ad-hoc" 0 0 0 empty)
+                                    (player p2-iprt p2-oprt "p2-white" "ad-hoc" 0 0 0 empty)
                                     'x)])
     (printf "accepted two connections!~n")
     (close-output-port p1-oprt)

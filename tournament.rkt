@@ -45,24 +45,26 @@
            (update-score p1 outcome-p1)
            (update-score p2 outcome-p2))]))
 
-;; drain-all-process-ports: player -> (void)
+;; drain-all-process-ports: player process-list -> (void)
 ;; drain the process standard-out and standard-error ports and display
 (define (drain-all-process-ports p pl)
-  (printf "~a's standard out~%" (player-name p))
-  (for ([l (in-port read-line (first pl))]) (displayln l))
-  (printf "~a's standard error~%" (player-name p))
-  (for ([l (in-port read-line (fourth pl))]) (displayln l))
-  (printf "~%"))
+  (when (symbol=? ((fifth pl) 'status) 'running)
+    (printf "~a's standard out~%" (player-name p))
+    (for ([l (in-port read-line (first pl))]) (displayln l))
+    (printf "~a's standard error~%" (player-name p))
+    (for ([l (in-port read-line (fourth pl))]) (displayln l))
+    (printf "~%")))
 
 ;; close-all-ports: player process-list -> (void)
 ;; close the ports used by the socket as well as the ports from the process
 (define (close-all-ports p pl)
   (close-output-port (player-oprt p)) ; socket writing
   (close-input-port (player-iprt p))  ; socket reading
-  (close-input-port (first pl))       ; process output
-  (close-output-port (second pl))     ; process input
-  (close-input-port (fourth pl))       ; process error
-  )
+  (when (symbol=? ((fifth pl) 'status) 'running)
+    (close-input-port (first pl))     ; process output
+    (close-output-port (second pl))   ; process input
+    (close-input-port (fourth pl))    ; process error
+  ))
 
 ;; tournament-games: int player player tcp-listener -> ...
 ;; run num-games games between the two players with given names, finally reporting the results
@@ -81,8 +83,8 @@
                        [(p2-iprt p2-oprt) (tcp-accept my-listener)]
                        )
            (reset-start-game)
-           (set-player-iprt! p1 p1-iprt) (set-player-oprt! p1 p1-oprt)
-           (set-player-iprt! p2 p2-iprt) (set-player-oprt! p2 p2-oprt)
+           (set-player-iprt! p1 p1-iprt) (set-player-oprt! p1 p1-oprt) (set-player-proclist! p1 start-p1)
+           (set-player-iprt! p2 p2-iprt) (set-player-oprt! p2 p2-oprt) (set-player-proclist! p2 start-p2)
            ;(nu-srv-game START-GAME p1 p2 'x)
            (srv-game START-GAME p1 p2 'x)
            ;; start cleaning up
@@ -99,9 +101,9 @@
 
 (define players
   (list
-   (player (void) (void) "random1" "racket RandomPlayer.rkt" 0 0 0)
-   (player (void) (void) "random2" "racket RandomPlayer.rkt" 0 0 0)
-   (player (void) (void) "random3" "racket RandomPlayer.rkt" 0 0 0)
+   (player (void) (void) "random1" "racket RandomPlayer.rkt" 0 0 0 empty)
+   (player (void) (void) "random2" "racket RandomPlayer.rkt" 0 0 0 empty)
+   (player (void) (void) "random3" "racket RandomPlayer.rkt" 0 0 0 empty)
    ;(player (void) (void) "chris" "cd /home/iba/teaching/CS116ai/spring16/gamesearch/cbetsillP03/; java gomoku" 0 0 0)
    ;(player (void) (void) "hunter" "cd /home/iba/teaching/CS116ai/spring16/gamesearch/hmcgushionP3/; java Controller3AlphaBeta04" 0 0 0)
    ;(player (void) (void) "james" "cd /home/iba/teaching/CS116ai/spring16/gamesearch/jbyronP3/; java GomokuAgent" 0 0 0)
