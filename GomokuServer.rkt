@@ -25,7 +25,7 @@
 ;;-------------------------------------------------------------------------------------------
 
 ;; game constants
-(define BOARD-SIZE 11)
+(define BOARD-SIZE 7)
 (define MAX-MOVE-TIME 2.0)
 ;; graphics constants
 (define IN-ROW-TO-WIN 5)
@@ -303,7 +303,7 @@
     (serve-a-game my-listener)
     ))
 
-;#|
+#|
 (define my-listener (get-a-listener))
 (serve-a-game my-listener)
-;|#
+|#
