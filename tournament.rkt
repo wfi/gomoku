@@ -48,12 +48,14 @@
 ;; drain-all-process-ports: player process-list -> (void)
 ;; drain the process standard-out and standard-error ports and display
 (define (drain-all-process-ports p pl)
-  (when (symbol=? ((fifth pl) 'status) 'running)
+  ;(when (symbol=? ((fifth pl) 'status) 'running)
+    ;((fifth pl) 'interrupt)
     (printf "~a's standard out~%" (player-name p))
     (for ([l (in-port read-line (first pl))]) (displayln l))
     (printf "~a's standard error~%" (player-name p))
     (for ([l (in-port read-line (fourth pl))]) (displayln l))
-    (printf "~%")))
+    (printf "~%");)
+  )
 
 ;; close-all-ports: player process-list -> (void)
 ;; close the ports used by the socket as well as the ports from the process
@@ -75,8 +77,10 @@
                  (player-name p1) (player-wins p1) (player-name p2) (player-wins p2))
          (reset-player p1) (reset-player p2)
          ]
-        [else 
-         (printf "Let's play a game~%")
+        [else
+         (printf "==========================================~%")
+         (printf "Play a game: ~a as black and ~a as white~%" (player-name p1) (player-name p2))
+         (printf "==========================================~%")
          (let*-values ([(start-p1) (process (player-command p1))]
                        [(p1-iprt p1-oprt) (tcp-accept my-listener)]
                        [(start-p2) (process (player-command p2))]
