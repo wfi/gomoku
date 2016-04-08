@@ -243,7 +243,8 @@
     ;;(printf "~%")
     (fprintf oprt "~%"))
   ;;(printf "~a~%" to-play)
-  (fprintf oprt "~a~%" to-play))
+  (fprintf oprt "~a~%" to-play)
+  (flush-output oprt))
 
 ;; srv-game: GS player player symbol -> (cons player player)
 ;; given a game-state, two players, and a symbol for which color is to play
