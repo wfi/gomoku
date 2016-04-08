@@ -25,7 +25,7 @@
 ;;-------------------------------------------------------------------------------------------
 
 ;; game constants
-(define BOARD-SIZE 7)
+(define BOARD-SIZE 11)
 (define MAX-MOVE-TIME 2.0)
 ;; graphics constants
 (define IN-ROW-TO-WIN 5)
@@ -265,9 +265,11 @@
          (let ([maybe-move (sync/timeout MAX-MOVE-TIME (read-line-evt (player-iprt p1)))])
            (cond [(boolean? maybe-move) ; move was NOT made in time -- forfeit-time
                   (send-game-info 'forfeit-time gs to-play (player-oprt p1)) (update-score p1 'lose)
-                  #|(when (and (cons? (player-proclist p1))
+                  ;#|
+                  (when (and (cons? (player-proclist p1))
                              (symbol=? ((fifth (player-proclist p1)) 'status) 'running))
-                    ((fifth (player-proclist p1)) 'kill))|#
+                    ((fifth (player-proclist p1)) 'kill))
+                  ;|#
                   (send-game-info 'win gs (toggle to-play) (player-oprt p2)) (update-score p2 'win)
                   (cons p1 p2)]
                  [else ; check if valid move (i.e., on the board and vacant)

@@ -3,6 +3,10 @@
 (require "GomokuServer.rkt")
 
 
+;; define racket executable for process*
+(define racket (find-executable-path "racket"))
+
+
 ;; reset-player: player -> void
 (define (reset-player p)
   (set-player-wins! p 0)
@@ -10,6 +14,7 @@
   (set-player-draws! p 0))
 
 ;; nu-srv-game: GS player player symbol -> ...
+#|
 (define (nu-srv-game gs p1 p2 to-play)
   (draw-game gs)
   ;; unless game-over, do:
@@ -44,6 +49,7 @@
            (send-game-info outcome-p2 gs to-play (player-oprt p2)) (flush-output (player-oprt p2))
            (update-score p1 outcome-p1)
            (update-score p2 outcome-p2))]))
+|#
 
 ;; drain-all-process-ports: player process-list -> (void)
 ;; drain the process standard-out and standard-error ports and display
@@ -81,9 +87,11 @@
          (printf "==========================================~%")
          (printf "Play a game: ~a as black and ~a as white~%" (player-name p1) (player-name p2))
          (printf "==========================================~%")
-         (let*-values ([(start-p1) (process (player-command p1))]
+         (let*-values ([(start-p1) ;(parameterize ([subprocess-group-enabled #t])
+                                     (process* racket (player-command p1))]
                        [(p1-iprt p1-oprt) (tcp-accept my-listener)]
-                       [(start-p2) (process (player-command p2))]
+                       [(start-p2) ;(parameterize ([subprocess-group-enabled #t])
+                                     (process* racket (player-command p2))]
                        [(p2-iprt p2-oprt) (tcp-accept my-listener)]
                        )
            (reset-start-game)
@@ -105,9 +113,9 @@
 
 (define players
   (list
-   (player (void) (void) "random1" "racket RandomPlayer.rkt" 0 0 0 empty)
-   (player (void) (void) "random2" "racket RandomPlayer.rkt" 0 0 0 empty)
-   (player (void) (void) "random3" "racket RandomPlayer.rkt" 0 0 0 empty)
+   (player (void) (void) "random1" "RandomPlayer.rkt" 0 0 0 empty)
+   (player (void) (void) "random2" "RandomPlayer.rkt" 0 0 0 empty)
+   (player (void) (void) "random3" "RandomPlayer.rkt" 0 0 0 empty)
    ;(player (void) (void) "chris" "cd /home/iba/teaching/CS116ai/spring16/gamesearch/cbetsillP03/; java gomoku" 0 0 0)
    ;(player (void) (void) "hunter" "cd /home/iba/teaching/CS116ai/spring16/gamesearch/hmcgushionP3/; java Controller3AlphaBeta04" 0 0 0)
    ;(player (void) (void) "james" "cd /home/iba/teaching/CS116ai/spring16/gamesearch/jbyronP3/; java GomokuAgent" 0 0 0)
