@@ -26,7 +26,7 @@
 
 ;; game constants
 (define BOARD-SIZE 11)
-(define MAX-MOVE-TIME 2.0)
+(define MAX-MOVE-TIME 20.0)
 ;; graphics constants
 (define IN-ROW-TO-WIN 5)
 (define CELL-SIZE 40)
@@ -291,13 +291,15 @@
 ;; serve-a-game: tcp-listener -> ...
 (define (serve-a-game my-listener)
   (reset-start-game)
-  (let*-values ([(p1-iprt p1-oprt) (tcp-accept my-listener)]
+  (let*-values ([(ignore1) (printf "waiting for player 1 to connect~%")]
+                [(p1-iprt p1-oprt) (tcp-accept my-listener)]
+                [(ignore2) (printf "player 1 connected -- waiting for player 2 to connect~%")]
                 [(p2-iprt p2-oprt) (tcp-accept my-listener)]
+                [(ignore3) (printf "player 2 connected -- ready to play game~%")]
                 [(result) (srv-game START-GAME
                                     (player p1-iprt p1-oprt "p1-black" "ad-hoc" 0 0 0 empty)
                                     (player p2-iprt p2-oprt "p2-white" "ad-hoc" 0 0 0 empty)
                                     'x)])
-    (printf "accepted two connections!~n")
     (close-output-port p1-oprt)
     (close-input-port p1-iprt)
     (close-output-port p2-oprt)
@@ -311,7 +313,7 @@
     (serve-a-game my-listener)
     ))
 
-#|
+; the next two line should be commented for tournament play
 (define my-listener (get-a-listener))
 (serve-a-game my-listener)
-|#
+
