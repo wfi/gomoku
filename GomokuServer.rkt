@@ -26,7 +26,7 @@
 
 ;; game constants
 (define BOARD-SIZE 11)
-(define MAX-MOVE-TIME 20.0)
+(define MAX-MOVE-TIME 2.0)
 ;; graphics constants
 (define IN-ROW-TO-WIN 5)
 (define CELL-SIZE 40)
