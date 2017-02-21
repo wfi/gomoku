@@ -1,6 +1,7 @@
 #lang racket
 
 (require lang/posn htdp/draw)
+(require "GomokuUtil.rkt")
 
 (provide (all-defined-out))
 
@@ -25,10 +26,9 @@
 ;;-------------------------------------------------------------------------------------------
 
 ;; game constants
-(define BOARD-SIZE 11)
+(define BOARD-SIZE 9)
 (define MAX-MOVE-TIME 2.0)
 ;; graphics constants
-(define IN-ROW-TO-WIN 5)
 (define CELL-SIZE 40)
 (define STONE-RADIUS (floor (* CELL-SIZE 9/20)))
 (define MARGIN (* CELL-SIZE 3/4))
@@ -44,38 +44,18 @@
 
 ;; a move is a (cons GS mp), where GS is a Game-State and mp is a move-pair
 
-;;---------------------- UTILITIES
+;;---------------------- UTILITIES 
+;; see also GomokuUtil.rkt
 
 ;; reset-start-game : ->
 (define (reset-start-game)
   (set! START-GAME (build-vector BOARD-SIZE (lambda (r) (build-vector BOARD-SIZE (lambda (c) 'b))))))
 
-;; vgame-spot: GS N N -> symbol
-;; the vector version
-(define (vgame-spot gs r c) (vector-ref (vector-ref gs r) c))
-
-;; place-move: GS (N . N) symbol -> GS
-;; copy the given game-state and then place the given to-play player's move.
-;; ASSUME the move is valid!
-(define (place-move gs move-pair to-play)
-  (let ([new-gs (build-vector BOARD-SIZE (lambda (r) (vector-copy (vector-ref gs r))))])
-    (vector-set! (vector-ref new-gs (car move-pair)) (cdr move-pair) to-play)
-    new-gs))
-
-;; place-move! : GS (N . N) symbol -> (void)
-(define (place-move! gs move-pair to-play)
-  (vector-set! (vector-ref gs (car move-pair)) (cdr move-pair) to-play))
-
-;; toggle: symbol -> symbol
-;; flips from one player to the other
-(define (toggle tp)
-  (case tp
-    [(x) 'o]
-    [(o) 'x]
-    [else (error 'toggle (format "invalid player to-play: ~a" tp))]))
-
 
 ;;--------------------- DRAWING UTILITIES
+
+;; stop the graphics engine
+(define (stop-draw) (stop))
 
 ;; draw-grid: GS -> true
 ;; ASSUME square board
@@ -127,37 +107,7 @@
             [(symbol=? (vgame-spot gs row col) 'o)
              (draw-o row col)]))))
 
-
-;;---------------------- EVALUATE GAME STATUS
-
-;; no-valid-moves?: GS -> boolean
-;; determine if the board is complete covered
-(define (no-valid-moves? gs)
-  (not (for*/or ([r BOARD-SIZE]
-                 [c BOARD-SIZE])
-         (symbol=? 'b (vgame-spot gs r c)))))
-
-;; game-over?: GS -> boolean
-;; determine if the game is over
-(define (game-over? gs)
-  (not (symbol=? (game-result gs) '?)))
-
-;; game-result: GS -> symbol['x,'o,'d,'?]
-;; determine if the game is a win for either 'x or 'o, a draw 'd, or not finished '?
-(define (game-result gs)
-  (cond [(n-in-row? gs 'x) 'x]
-        [(n-in-row? gs 'o) 'o]
-        [(no-valid-moves? gs) 'd]
-        [else '?]))
-
-;; win/lose/draw: GS symbol -> (or 'win 'lose 'draw)
-(define (win/lose/draw gs to-play)
-  (let ([res (game-result gs)])
-    (case res
-      [(x) (if (symbol=? 'x to-play) 'win 'lose)]
-      [(o) (if (symbol=? 'o to-play) 'win 'lose)]
-      [(d) 'draw]
-      [else (error 'win/lose/draw "game not finished")])))
+;;--------------------- SCORING 
 
 ;; update-score: player symbol -> void
 (define (update-score p result)
@@ -166,47 +116,6 @@
     [(lose) (set-player-losses! p (add1 (player-losses p)))]
     [(draw) (set-player-draws! p (add1 (player-draws p)))]
     [else (error 'update-score "unrecognized game result -- should be one of win, lose, draw")]))
-
-;;-----------------------------------------------------------
-;; HELPER CODE FOR CHECKING N-IN-A-ROW
-
-(define-struct espot (l ul u ur))
-;; an espot is a structure: (make-espot n1 n2 n3 n4)
-;; where n1 through n4 are numbers
-;; the numbers represent the length of the line of stones in the respective directions
-
-;; make-inline-grid: GS sybol -> (vectorof (vectorof espot))
-;; create a grid of espots that describe to-plays (tp) in a line
-(define (make-inline-grid gs tp)
-  (local ((define esgrid (build-vector BOARD-SIZE (lambda (_) (build-vector BOARD-SIZE (lambda (_) 'dummy)))))
-          (define (vbuild-espot r c)
-            (make-espot (if (zero? c) 1 (add1 (espot-l (vector-ref (vector-ref esgrid r) (sub1 c)))))
-                        (if (or (zero? c) (zero? r)) 1 (add1 (espot-ul (vector-ref (vector-ref esgrid (sub1 r)) (sub1 c)))))
-                        (if (zero? r) 1 (add1 (espot-u (vector-ref (vector-ref esgrid (sub1 r)) c))))
-                        (if (or (= c (sub1 BOARD-SIZE)) (zero? r)) 1 (add1 (espot-ur (vector-ref (vector-ref esgrid (sub1 r)) (add1 c)))))))
-          (define (vprow! r)
-            (local ((define the-row (vector-ref esgrid r)))
-              (for ([i BOARD-SIZE])
-                (vector-set! the-row i 
-                             (if (symbol=? (vgame-spot gs r i) tp)
-                                 (vbuild-espot r i)
-                                 (make-espot 0 0 0 0)))))))
-    (begin (for ([r BOARD-SIZE]) (vprow! r))
-           esgrid)))
-
-;; n-in-row?: GS symbol -> boolean
-;; determine if there are IN-ROW-TO-WIN stones of the player p in a line of the given game-state
-(define (n-in-row? gs p)
-  (local ((define ig (make-inline-grid gs p)))
-    (positive? (vector-count 
-                (lambda (row)
-                  (positive? (vector-count
-                              (lambda (e) (or (= IN-ROW-TO-WIN (espot-l e))
-                                              (= IN-ROW-TO-WIN (espot-ul e))
-                                              (= IN-ROW-TO-WIN (espot-u e))
-                                              (= IN-ROW-TO-WIN (espot-ur e))))
-                              row)))
-                ig))))
 
 
 ;;------------------------------------------------------------------------------------------------------
@@ -247,6 +156,7 @@
   (flush-output oprt))
 
 ;; srv-game: GS player player symbol -> (cons player player)
+;; For use in tournament mode.
 ;; given a game-state, two players, and a symbol for which color is to play
 ;; (w/ implicit understanding that p1 plays next with that color)
 ;; continue serving the game until completed.
@@ -256,6 +166,7 @@
   (cond [(game-over? gs) ; terminate with actual outcome
          (let ([p1-result (win/lose/draw gs to-play)]
                [p2-result (win/lose/draw gs (toggle to-play))])
+           (printf "Result: player ~a ~a, player ~a ~a~%" (player-name p1) p1-result (player-name p2) p2-result)
            (send-game-info p1-result gs to-play (player-oprt p1)) (flush-output (player-oprt p1))
            (update-score p1 p1-result)
            (send-game-info p2-result gs to-play (player-oprt p2)) (flush-output (player-oprt p2))
@@ -265,6 +176,7 @@
          (send-game-info 'continuing gs to-play (player-oprt p1)) (flush-output (player-oprt p1))
          (let ([maybe-move (sync/timeout MAX-MOVE-TIME (read-line-evt (player-iprt p1)))])
            (cond [(boolean? maybe-move) ; move was NOT made in time -- forfeit-time
+                  (printf "Player ~a forfeit-time, player ~a wins~%" (player-name p1) (player-name p2))
                   (send-game-info 'forfeit-time gs to-play (player-oprt p1)) (update-score p1 'lose)
                   ;#|
                   (when (and (cons? (player-proclist p1))
@@ -278,7 +190,8 @@
                     (cond [(not (and (number? (car a-move)) (< -1 (car a-move) BOARD-SIZE)
                                      (number? (cdr a-move)) (< -1 (cdr a-move) BOARD-SIZE)
                                      (symbol=? 'b (vgame-spot gs (car a-move) (cdr a-move))))) ;; invalid move -- forfeit-move
-                           (printf  "forfeit-move: attempted move at (~a,~a)~%" (car a-move) (cdr a-move))
+                           (printf  "forfeit-move: ~a attempted move at (~a,~a), player ~a wins~%"
+                                    (player-name p1) (car a-move) (cdr a-move) (player-name p2))
                            (send-game-info 'forfeit-move gs to-play (player-oprt p1)) (update-score p1 'lose)
                            (send-game-info 'win gs (toggle to-play) (player-oprt p2)) (update-score p2 'win)
                            (cons p1 p2)]
@@ -289,6 +202,7 @@
         ))
   
 ;; serve-a-game: tcp-listener -> ...
+;; for use in head-to-head testing rather than tournament play
 (define (serve-a-game my-listener)
   (reset-start-game)
   (let*-values ([(ignore1) (printf "waiting for player 1 to connect~%")]
@@ -314,6 +228,6 @@
     ))
 
 ; the next two line should be commented for tournament play
-(define my-listener (get-a-listener))
-(serve-a-game my-listener)
+;(define my-listener (get-a-listener))
+;(serve-a-game my-listener)
 
