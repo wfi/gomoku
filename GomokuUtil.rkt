@@ -10,7 +10,7 @@
          place-move!
          toggle
          (struct-out espot)
-         
+         get-winning-run
          )
 
 (define IN-ROW-TO-WIN 5)
@@ -87,7 +87,7 @@
 ;;-----------------------------------------------------------
 ;; HELPER CODE FOR CHECKING N-IN-A-ROW
 
-(define-struct espot (l ul u ur))
+(define-struct espot (l ul u ur) #:transparent)
 ;; an espot is a structure: (make-espot n1 n2 n3 n4)
 ;; where n1 through n4 are numbers
 ;; the numbers represent the length of the line of stones in the respective directions
@@ -124,4 +124,22 @@
                                               (= IN-ROW-TO-WIN (espot-ur e))))
                               row)))
                 ig))))
+
+;; get-winning-run : GS (or 'x 'o) -> (listof (N . N))
+;; ASSUMES: that a winning line of stones exists
+(define (get-winning-run gs p)
+  (let* ([ig (make-inline-grid gs p)]
+         [row-col-and-dir (for*/or ([row (board-height gs)]
+                                         [col (board-width gs)])
+                                 (let ([e (vgame-spot ig row col)])
+                                   (for/first ([dir (list (cons 0 -1) (cons -1 -1) (cons -1 0) (cons -1 1))]
+                                               [val (list (espot-l e) (espot-ul e) (espot-u e) (espot-ur e))]
+                                               #:when (= val IN-ROW-TO-WIN))
+                                     (list (cons row col) dir))))]
+         [row (car (first row-col-and-dir))]
+         [col (cdr (first row-col-and-dir))]
+         [dir (second row-col-and-dir)])
+    (for/list ([i IN-ROW-TO-WIN])
+      (cons (+ row (* i (car dir))) (+ col (* i (cdr dir)))))))
+                 
 

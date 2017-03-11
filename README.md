@@ -28,9 +28,10 @@ In this case, players must run locally on the server machine.
 
 ## To Do
 
-* have graphics show the winning series of pieces in a row
+* convert graphics from draw to image package
 * add better error handling in tournament.rkt when a client player crashes
 * re-capture the standard output from a killed player after forfeit-time
 * add comprehensive recording of results rather than just displaying the
 result between each pairing of two players
+* ~~have graphics show the winning series of pieces in a row~~
 * ~~might need to kill process when forfeit-time happens client player crashes~~

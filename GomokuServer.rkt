@@ -93,6 +93,15 @@
             (draw-circle (make-posn x y) STONE-RADIUS 'black)))
     (draw-o-help (+ (* r CELL-SIZE) MARGIN) (+ (* c CELL-SIZE) MARGIN))))
 
+;; draw-win: (listof (N . N)) -> true
+;; draw a red circle around the winning run
+(define (draw-win wr)
+  (for ([rc wr])
+    (draw-circle (make-posn (+ (* (cdr rc) CELL-SIZE) MARGIN) (+ (* (car rc) CELL-SIZE) MARGIN))
+                 (+ STONE-RADIUS 3) 'red)
+    (draw-circle (make-posn (+ (* (cdr rc) CELL-SIZE) MARGIN) (+ (* (car rc) CELL-SIZE) MARGIN))
+                 (+ STONE-RADIUS 2) 'red)))
+
 ;; draw-game: GS -> true
 ;; draw the gamestate
 (define (draw-game gs)
@@ -166,6 +175,8 @@
   (cond [(game-over? gs) ; terminate with actual outcome
          (let ([p1-result (win/lose/draw gs to-play)]
                [p2-result (win/lose/draw gs (toggle to-play))])
+           (cond [(symbol=? p1-result 'win) (draw-win (get-winning-run gs to-play))]
+                 [(symbol=? p2-result 'win) (draw-win (get-winning-run gs (toggle to-play)))])
            (printf "Result: player ~a ~a, player ~a ~a~%" (player-name p1) p1-result (player-name p2) p2-result)
            (send-game-info p1-result gs to-play (player-oprt p1)) (flush-output (player-oprt p1))
            (update-score p1 p1-result)
@@ -228,6 +239,6 @@
     ))
 
 ; the next two line should be commented for tournament play
-;(define my-listener (get-a-listener))
-;(serve-a-game my-listener)
+(define my-listener (get-a-listener))
+(serve-a-game my-listener)
 
