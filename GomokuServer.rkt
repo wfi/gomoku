@@ -27,7 +27,7 @@
 
 ;; game constants
 (define BOARD-SIZE 9)
-(define MAX-MOVE-TIME 2.0)
+(define MAX-MOVE-TIME 20.0)
 ;; graphics constants
 (define CELL-SIZE 40)
 (define STONE-RADIUS (floor (* CELL-SIZE 9/20)))

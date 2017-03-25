@@ -90,17 +90,16 @@
 
 (define players
   (list
-   ;(player (void) (void) "ABsearch" "cd /home/iba/teaching/tmp/CS455ai/ ; racket ABGomoku.rkt" 0 0 0 empty)
+   (player (void) (void) "ABsearch" "cd /home/iba/teaching/tmp/CS455ai/ ; racket ABGomoku.rkt" 0 0 0 empty)
    ;(player (void) (void) "Alt-ABsearch" "cd /home/iba/teaching/tmp/CS455ai/ ; racket AltABGomoku.rkt" 0 0 0 empty)
    ;(player (void) (void) "random1" "RandomPlayer.rkt" 0 0 0 empty)
    ;(player (void) (void) "random2" "RandomPlayer.rkt" 0 0 0 empty)
-   ;(player (void) (void) "group0" "cd /home/iba/teaching/tmp/CS455ai/ ; racket ABGomoku.rkt" 0 0 0 empty)
-   (player (void) (void) "group1" "cd /home/iba/teaching/tmp/CS455ai/gomoku/group1/src/ ; java GomokuPlayer" 0 0 0 empty)
-   (player (void) (void) "group2" "cd /home/iba/teaching/tmp/CS455ai/gomoku/group2/ ; java GomokuClient" 0 0 0 empty)
-   (player (void) (void) "group3" "cd /home/iba/teaching/tmp/CS455ai/gomoku/group3/src/ ; java GomokuDriver" 0 0 0 empty)
-   (player (void) (void) "group4" "cd /home/iba/teaching/tmp/CS455ai/gomoku/group4/GomokuAgent/src/ ; java Main" 0 0 0 empty)
+   ;(player (void) (void) "group1" "cd /home/iba/teaching/tmp/CS455ai/gomoku/group1/src/ ; java GomokuPlayer" 0 0 0 empty)
+   ;(player (void) (void) "group2" "cd /home/iba/teaching/tmp/CS455ai/gomoku/group2/ ; java GomokuClient" 0 0 0 empty)
+   ;(player (void) (void) "group3" "cd /home/iba/teaching/tmp/CS455ai/gomoku/group3/src/ ; java GomokuDriver" 0 0 0 empty)
+   ;(player (void) (void) "group4" "cd /home/iba/teaching/tmp/CS455ai/gomoku/group4/GomokuAgent/src/ ; java Main" 0 0 0 empty)
    (player (void) (void) "group5" "cd /home/iba/teaching/tmp/CS455ai/gomoku/group5/src/ ; java GomokuAgent" 0 0 0 empty)
-   (player (void) (void) "group6" "cd /home/iba/teaching/tmp/CS455ai/gomoku/group6/src/ ; java GomokuAgent" 0 0 0 empty)
+   ;(player (void) (void) "group6" "cd /home/iba/teaching/tmp/CS455ai/gomoku/group6/src/ ; java GomokuAgent" 0 0 0 empty)
    ;;;;(player (void) (void) "group7" "cd /home/iba/teaching/tmp/CS455ai/gomoku/group7... ; ..." 0 0 0 empty)
    (player (void) (void) "group8" "cd /home/iba/teaching/tmp/CS455ai/gomoku/group8/ ; java GomokuClient" 0 0 0 empty)
    ))
@@ -113,11 +112,12 @@
   ((= (length ps) 1))
   (for ([p2 (cdr ps)])
     (let ([p1 (car ps)])
-      (tournament-games 3 p1 p2 my-listener))))
+      (tournament-games 9 p1 p2 my-listener))))
 ;|#
 
 ;; just test the first player against all the others
-;(for ([p (cdr players)]) (tournament-games 5 (car players) p my-listener))
+;(for ([p (cdr players)]) (tournament-games 7 (car players) p my-listener))
+
 
 ;; finally, report the results
 (printf "OVERALL RESULTS FOR THE TOURNAMENT~%==================================~%")
