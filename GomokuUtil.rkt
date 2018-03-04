@@ -49,13 +49,13 @@
         [(no-valid-moves? gs) 'd]
         [else '?]))
 
-;; win/lose/draw: GS symbol -> (or 'win 'lose 'draw)
+;; win/lose/draw: GS symbol -> (or 'WIN 'LOSE 'DRAW)
 (define (win/lose/draw gs to-play)
   (let ([res (game-result gs)])
     (case res
-      [(x) (if (symbol=? 'x to-play) 'win 'lose)]
-      [(o) (if (symbol=? 'o to-play) 'win 'lose)]
-      [(d) 'draw]
+      [(x) (if (symbol=? 'x to-play) 'WIN 'LOSE)]
+      [(o) (if (symbol=? 'o to-play) 'WIN 'LOSE)]
+      [(d) 'DRAW]
       [else (error 'win/lose/draw "game not finished")])))
 
 ;;---------------------- MANIPULATE BOARD GAME-STATES

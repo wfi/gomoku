@@ -40,9 +40,10 @@
   (let* (;read game-status/game-state/to-play-player triple
          [gstatus (string->symbol (read-line iprt))]
          [board-state (read-board iprt)]
+	 [last-move (cons (read iprt) (read iprt))][ignore (read-line iprt)]
          [to-play (read-line iprt)])
     ;; repeat until game over
-    (cond [(symbol=? gstatus 'continuing)
+    (cond [(symbol=? gstatus 'CONTINUING)
            ;; display the game-state information
            #|
            (displayln gstatus)
@@ -53,7 +54,10 @@
            ;; occasionally wait for the clock to run out for testing the time-out feature of the server
            ;(when (< (random) 0.01) (sleep 2.5))
            ;; send the client's move to the server
-           (displayln (random-move board-state) oprt) (flush-output oprt) ;send move to server
+           (let ([rmove (random-move board-state)])
+             (printf "Random player sees last-move as ~a and moves: ~a ~%" last-move rmove)
+             (displayln rmove oprt) (flush-output oprt) ;send move to server
+             )
            (net-play-moves iprt oprt)]
           [else gstatus])))
 

@@ -26,6 +26,33 @@ The tournament needs a bit more set-up.
 Players must be created as in the example found in tournament.rkt.
 In this case, players must run locally on the server machine.
 
+## Protocol
+
+Connection: simply establish socket connection to port 17033.
+
+Game state:
+When it is the player's turn,
+the server will send the following newline-terminated data elements:
+* Game status.
+Status value is one of: CONTINUING, WIN, LOSE, DRAW, FORFEIT-MOVE, or FORFEIT-TIME.
+The last two values reflect an illegal move or exceeding the 2 second limit, respectively.
+* Current game board configuration.
+(currently only supports square boards)
+A series of newline-terminated strings having as many characters
+(not counting the newline) as the board dimension (width and height).
+Subsequent to the first row of length n, there will be n-1 lines to follow
+representing the rest of the rows of the board.
+* The previous move that was made.
+Two numbers representing the 0-based row and column of the move just made by the other player.
+If this player is asked to make the first move of the game (i.e., no previous move),
+the row and column values will both be -1.
+* Which color is to play.
+Either "x" or "o" for black or white, respectively.
+
+Player move:
+The player sends its move as row and column (again, 0-based)
+on a single newline-terminated string.
+
 ## To Do
 
 * convert graphics from draw to image package
