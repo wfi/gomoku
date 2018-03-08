@@ -33,10 +33,13 @@
          [gstatus (string->symbol (read-line iprt))]
          [ignore1 (printf "Game status: ~s~%" gstatus)]
          [board-state (read-board iprt)]
+         [last-move (with-input-from-string (read-line iprt)
+                      (lambda () (cons (read) (read))))]
          [to-play (read-line iprt)]
          [ignore2 (printf "Your color: ~s~%" to-play)])
     ;; repeat until game over
-    (cond [(symbol=? gstatus 'continuing)
+    (printf "Last move was: ~a~%" last-move)
+    (cond [(symbol=? gstatus 'CONTINUING)
            ;; display the game-state information
            #|
            (displayln gstatus)

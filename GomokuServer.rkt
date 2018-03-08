@@ -140,7 +140,7 @@
 ;; and pl is a list of five items returned by the process function
 
 
-(define (get-a-listener) (tcp-listen GOMOKUPORT))
+(define (get-a-listener) (tcp-listen GOMOKUPORT 10 #t))
 
 ;; read-move: intput-port -> (cons N N)
 ;; read a player's move from the player's input-port, returning as a dotted pair
@@ -238,10 +238,10 @@
             (player-wins (car result)) (player-losses (car result)) (player-draws (car result))
             (player-name (cdr result))
             (player-wins (cdr result)) (player-losses (cdr result)) (player-draws (cdr result)))
-    (tcp-close my-listener)
-    ;(start-a-game my-listener)
     ))
 
-;; the next two line should be commented for tournament play
+;; the next three lines should be commented for tournament play
 (define my-listener (get-a-listener))
 (start-a-game my-listener)
+(tcp-close my-listener)
+(sleep 5)(stop-draw)
